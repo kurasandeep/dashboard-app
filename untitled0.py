@@ -34,7 +34,7 @@ CITY_MAP = {
 DEFAULT_CITY = "New York"
 DAYS_TO_ANALYZE = 365
 NUM_TRACKS = 5
-END_DATE = datetime.now().date()
+END_DATE = (datetime.now().date()-end).days
 START_DATE = END_DATE - timedelta(days=DAYS_TO_ANALYZE)
 
 # Features used by the Random Forest Model
