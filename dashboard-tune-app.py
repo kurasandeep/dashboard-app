@@ -60,7 +60,7 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
         for track_id, features in track_features.items():
             # Seasonal Sine Wave Component 
 
-[Image of sine cosine wave plot]
+#[Image of sine cosine wave plot]
 
             base_pop = 50 + 10 * np.sin(2 * np.pi * date.timetuple().tm_yday / 365)
             popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
