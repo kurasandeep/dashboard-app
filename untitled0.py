@@ -73,7 +73,7 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
             popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
 
             record = {
-                'date': date.date(),
+                'date': date,
                 'track_id': track_id,
                 'location': location_name,
                 'popularity': int(popularity),
