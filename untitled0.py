@@ -218,7 +218,7 @@ lat, lon, elevation, location_name = CITY_MAP[selected_city]
 st.sidebar.markdown(f"""
     ---
     **Weather Data Source:** {location_name}
-    **Training Period:** 1 Year ({START_DATE} to {END_DATE.date()})
+    **Training Period:** 1 Year ({START_DATE} to {END_DATE})
 """)
 st.sidebar.info("The model trains on simulated daily song data, correlating popularity with the selected city's historical weather to predict future trends.")
 # --- End UI Input ---
