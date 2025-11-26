@@ -109,13 +109,13 @@ def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date
     weather_df = get_meteostat_weather_data(lat, lon, start_date, end_date, location_name, elevation)
 
     # 3. Merge and Feature Engineering
-    music_df['date'] = pd.to_datetime(music_df['date']).dt.date
-    weather_df['date'] = pd.to_datetime(weather_df['date']).dt.date
+    music_df['date'] = pd.to_datetime(music_df['date']).dt.normalize()
+    weather_df['date'] = pd.to_datetime(weather_df['date']).dt.normalize()
     master_df = pd.merge(music_df, weather_df, on=['date', 'location'], how='inner')
 
     # Time Features
-    master_df['month'] = master_df['date'].apply(lambda x: x.month)
-    master_df['day_of_week'] = master_df['date'].apply(lambda x: x.weekday())
+    master_df['month'] = master_df['date'].dt.month
+    master_df['day_of_week'] = master_df['date'].dt.dayofweek
     master_df['is_weekend'] = master_df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
 
     # Cyclical Features
@@ -285,7 +285,7 @@ st.header("3. Seasonal Trends of Key Features")
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 # Prepare data for seasonal visualization
-seasonal_df = master_df.groupby(master_df['date'].apply(lambda x: x.month))[['valence', 'energy', 'tavg']].mean().reset_index()
+seasonal_df = master_df.groupby(master_df['date'].dt.month)[['valence', 'energy', 'tavg']].mean().reset_index()
 seasonal_df['Month'] = seasonal_df['date'].apply(lambda x: months[x - 1])
 
 # Plot Valence (Mood) and Energy vs. Month
