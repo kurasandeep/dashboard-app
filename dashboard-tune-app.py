@@ -201,7 +201,7 @@ def generate_forecast(model, data_df, days=30):
 
     # Make Forecast
     X_forecast = forecast_df[FEATURES]
-    forecast_predictions = model.predict(X_forecast)
+    forecast_predictions = _model.predict(X_forecast)
 
     forecast_df['predicted_popularity'] = np.round(forecast_predictions).astype(int)
     return forecast_df[['date', 'predicted_popularity', 'tavg', 'daylight_hours', 'month']]
