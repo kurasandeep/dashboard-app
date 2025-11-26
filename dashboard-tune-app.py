@@ -168,7 +168,7 @@ def train_model(data_df):
 # --- 3. FORECASTING (STEP 7) ---
 
 @st.cache_data(show_spinner="3. Generating 30-Day Forecast...")
-def generate_forecast(model, data_df, days=30):
+def generate_forecast(_model, data_df, days=30):
     """Generates a forward 30-day forecast based on the trained model."""
     
     last_date = data_df['date'].max() # Returns a timestamp (datetime64)
