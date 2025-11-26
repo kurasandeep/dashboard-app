@@ -1,11 +1,12 @@
-# dashboard-tune-app.py - Final, Stable, Error-Free Code for Streamlit Deployment
+# dashboard_app.py - Final, Stable, Error-Free Code for Streamlit Deployment
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+# FIX 1: Import 'time' for robust date conversion
+from datetime import datetime, timedelta, time 
 # Libraries for Data Acquisition and Modeling
 from meteostat import Point, Daily
 from sklearn.ensemble import RandomForestRegressor
@@ -25,7 +26,6 @@ CITY_MAP = {
 DEFAULT_CITY = "New York"
 DAYS_TO_ANALYZE = 365
 NUM_TRACKS = 5 
-# FIX 1: Ensure date definition is clean and correct
 END_DATE = datetime.now().date() 
 START_DATE = END_DATE - timedelta(days=DAYS_TO_ANALYZE)
 
@@ -66,7 +66,7 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
             popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
 
             record = {
-                'date': date,  # FIX 2: Removed redundant .date() call
+                'date': date,  # Fixed: date is already a datetime.date object
                 'track_id': track_id,
                 'location': location_name,
                 'popularity': int(popularity),
@@ -84,11 +84,19 @@ def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date
     
     # Internal function to fetch weather data from Meteostat
     def get_meteostat_weather_data(lat, lon, start, end, location_name, elevation):
+        
+        # FIX 2: Convert input datetime.date objects to datetime.datetime 
+        # objects before passing to Daily() to prevent internal Meteostat 
+        # TypeError when checking cache age (datetime - date).
+        start_dt = datetime.combine(start, time(0, 0))
+        end_dt = datetime.combine(end, time(0, 0))
+        
         location = Point(lat, lon, elevation)
-        # We need to ensure that the start/end dates passed to Meteostat are compatible
-        data = Daily(location, start, end)
+        # Pass the fully qualified datetime objects
+        data = Daily(location, start_dt, end_dt) 
         weather_df = data.fetch()
         weather_df['location'] = location_name
+        
         weather_df = weather_df.reset_index().rename(columns={'time': 'date'})
         weather_df = weather_df[['date', 'location', 'tavg', 'prcp', 'tsun']].copy()
         weather_df['daylight_hours'] = weather_df['tsun'].fillna(0) / 60 
@@ -105,7 +113,7 @@ def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date
 
     # 3. Merge and Feature Engineering
     
-    # FIX 3: Standardize to Pandas datetime objects (datetime64)
+    # Standardize to Pandas datetime objects (datetime64)
     music_df['date'] = pd.to_datetime(music_df['date']).dt.normalize()
     weather_df['date'] = pd.to_datetime(weather_df['date']).dt.normalize()
     
@@ -149,7 +157,7 @@ def train_model(data_df):
     y_pred = model.predict(X_test)
     
     validation_df = pd.DataFrame({
-        # FIX 4: Safely convert datetime64 to date object for display
+        # Safely convert datetime64 to date object for display
         'date': data_df['date'].dt.date.tail(len(y_test)), 
         'actual_popularity': y_test,
         'predicted_popularity': y_pred
@@ -216,7 +224,7 @@ selected_city = st.sidebar.selectbox(
 # Resolve coordinates based on user selection
 lat, lon, elevation, location_name = CITY_MAP[selected_city]
 
-# FIX 5: Removed redundant .date() call from END_DATE in the f-string
+# Removed redundant .date() call from END_DATE in the f-string
 st.sidebar.markdown(f"""
     ---
     **Weather Data Source:** {location_name}  
