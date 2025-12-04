@@ -30,38 +30,6 @@ FEATURES = [
     'month_sin', 'month_cos', 
     'is_weekend'
 ]
-
-# SIMULATION FUNCTION 
-
-"""def get_simulated_spotify_data(end_date, days, tracks, location_name):
-    date_range = [end_date - timedelta(days=d) for d in range(days)]
-    data = []
-    track_features = {
-        f'track_{i}': {
-            'energy': np.random.uniform(0.3, 0.9), 
-            'valence': np.random.uniform(0.2, 0.8), 
-            'tempo': np.random.uniform(90, 150),
-            'danceability': np.random.uniform(0.4, 0.8),
-        } for i in range(1, tracks + 1)
-    }
-
-    for date in date_range:
-        for track_id, features in track_features.items():
-            # Seasonal Sine Wave Component 
-            
-            base_pop = 50 + 10 * np.sin(2 * np.pi * date.timetuple().tm_yday / 365)
-            popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
-
-            record = {
-                'date': date,
-                'track_id': track_id,
-                'location': location_name,
-                'popularity': int(popularity),
-                **features
-            }
-            data.append(record)
-
-    return pd.DataFrame(data)"""
 # SIMULATION FUNCTION 
 def get_simulated_spotify_data(end_date, days, tracks, location_name):
     date_range = [end_date - timedelta(days=d) for d in range(days)]
