@@ -1,24 +1,18 @@
-# dashboard_app.py - Final, Stable, Error-Free Code for Streamlit Deployment
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-# FIX 1: Import 'time' for robust date conversion
 from datetime import datetime, timedelta, time 
-# Libraries for Data Acquisition and Modeling
 from meteostat import Point, Daily
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score
 
-# --- 0. CONFIGURATION AND CONSTANTS ---
+#  CONFIGURATION AND CONSTANTS 
 
-# Define mapping for selected cities to their coordinates (Lat, Lon, Elevation, Name)
 CITY_MAP = {
     "New York": (40.71, -74.01, 10, "New York City"),
     "London": (51.5, -0.12, 25, "London, UK"),
-    "Sydney": (33.86, 151.2, 39, "Sydney, Australia"),
     "Tokyo": (35.68, 139.75, 40, "Tokyo, Japan"),
     "Miami": (25.76, -80.19, 2, "Miami, USA"),
     "Berlin": (52.52, 13.4, 34, "Berlin, Germany"),
@@ -37,16 +31,11 @@ FEATURES = [
     'is_weekend'
 ]
 
-# --- SIMULATION FUNCTION (STEP 1) ---
+# SIMULATION FUNCTION 
 
 def get_simulated_spotify_data(end_date, days, tracks, location_name):
-    """
-    Simulates daily chart data and audio features for multiple tracks over a year, 
-    with a seasonal popularity bias using a sine wave.
-    """
     date_range = [end_date - timedelta(days=d) for d in range(days)]
     data = []
-
     track_features = {
         f'track_{i}': {
             'energy': np.random.uniform(0.3, 0.9), 
@@ -59,14 +48,12 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
     for date in date_range:
         for track_id, features in track_features.items():
             # Seasonal Sine Wave Component 
-
-#[Image of sine cosine wave plot]
-
+            
             base_pop = 50 + 10 * np.sin(2 * np.pi * date.timetuple().tm_yday / 365)
             popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
 
             record = {
-                'date': date,  # Fixed: date is already a datetime.date object
+                'date': date,
                 'track_id': track_id,
                 'location': location_name,
                 'popularity': int(popularity),
@@ -76,23 +63,16 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
 
     return pd.DataFrame(data)
 
-# --- 1. DATA ACQUISITION & INTEGRATION (STEPS 1-3) ---
+# DATA ACQUISITION & INTEGRATION 
 
 @st.cache_data(show_spinner="1. Acquiring Weather and Simulating Music Data...")
 def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date):
-    """Acquires, simulates, and integrates all project data."""
-    
     # Internal function to fetch weather data from Meteostat
     def get_meteostat_weather_data(lat, lon, start, end, location_name, elevation):
-        
-        # FIX 2: Convert input datetime.date objects to datetime.datetime 
-        # objects before passing to Daily() to prevent internal Meteostat 
-        # TypeError when checking cache age (datetime - date).
         start_dt = datetime.combine(start, time(0, 0))
         end_dt = datetime.combine(end, time(0, 0))
         
         location = Point(lat, lon, elevation)
-        # Pass the fully qualified datetime objects
         data = Daily(location, start_dt, end_dt) 
         weather_df = data.fetch()
         weather_df['location'] = location_name
@@ -112,8 +92,7 @@ def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date
     weather_df = get_meteostat_weather_data(lat, lon, start_date, end_date, location_name, elevation)
 
     # 3. Merge and Feature Engineering
-    
-    # Standardize to Pandas datetime objects (datetime64)
+
     music_df['date'] = pd.to_datetime(music_df['date']).dt.normalize()
     weather_df['date'] = pd.to_datetime(weather_df['date']).dt.normalize()
     
@@ -135,12 +114,10 @@ def get_integrated_data(lat, lon, elevation, location_name, start_date, end_date
     
     return master_df
 
-# --- 2. MODEL TRAINING (STEP 4) ---
+# MODEL TRAINING
 
 @st.cache_resource(show_spinner="2. Training Random Forest Regressor...")
-def train_model(data_df):
-    """Trains the Random Forest Regressor and extracts validation data."""
-    
+def train_model(data_df):    
     X = data_df[FEATURES]
     y = data_df['popularity']
 
@@ -165,14 +142,11 @@ def train_model(data_df):
     
     return model, validation_df
 
-# --- 3. FORECASTING (STEP 7) ---
+# FORECASTING
 
 @st.cache_data(show_spinner="3. Generating 30-Day Forecast...")
-def generate_forecast(_model, data_df, days=30):
-    """Generates a forward 30-day forecast based on the trained model."""
-    
-    last_date = data_df['date'].max() # Returns a timestamp (datetime64)
-    # Convert last_date to a date object for clean addition with timedelta
+def generate_forecast(_model, data_df, days=30):    
+    last_date = data_df['date'].max()
     future_dates = [last_date.date() + timedelta(days=d) for d in range(1, days + 1)] 
     forecast_df = pd.DataFrame({'date': future_dates})
 
@@ -185,7 +159,6 @@ def generate_forecast(_model, data_df, days=30):
     forecast_df['daylight_hours'] = seasonal_stats['daylight_hours'] + np.random.normal(0, 1, days)
 
     # Feature Engineering for Forecast
-    # date column is Python date object here, so use .apply()
     forecast_df['month'] = forecast_df['date'].apply(lambda x: x.month)
     forecast_df['is_weekend'] = forecast_df['date'].apply(lambda x: 1 if x.weekday() >= 5 else 0)
     forecast_df['month_sin'] = np.sin(2 * np.pi * forecast_df['month'] / 12)
@@ -207,12 +180,12 @@ def generate_forecast(_model, data_df, days=30):
     return forecast_df[['date', 'predicted_popularity', 'tavg', 'daylight_hours', 'month']]
 
 
-# --- 4. STREAMLIT APPLICATION UI & VISUALIZATION (STEP 8) ---
+# STREAMLIT APPLICATION UI & VISUALIZATION 
 
 st.set_page_config(layout="wide", page_title="Song Trend Forecasting 🎶")
 st.title("🎶 Weather-Driven Song Trend Forecasting Dashboard")
 
-# --- UI INPUT (Sidebar) ---
+# UI INPUT (Sidebar)
 st.sidebar.header("Location & Analysis Settings")
 
 selected_city = st.sidebar.selectbox(
@@ -230,10 +203,8 @@ st.sidebar.markdown(f"""
     **Weather Data Source:** {location_name}  
     **Training Period:** 1 Year ({START_DATE} to {END_DATE}) 
 """)
-st.sidebar.info("The model trains on simulated daily song data, correlating popularity with the selected city's historical weather to predict future trends.")
-# --- End UI Input ---
-
-# Execution Order: Load Data -> Train Model -> Generate Forecast
+# st.sidebar.info("The model trains on simulated daily song data, correlating popularity with the selected city's historical weather to predict future trends.")
+# End UI Input
 master_df = get_integrated_data(lat, lon, elevation, location_name, START_DATE, END_DATE)
 model, validation_df = train_model(master_df)
 forecast_df = generate_forecast(model, master_df)
