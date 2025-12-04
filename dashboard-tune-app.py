@@ -33,7 +33,7 @@ FEATURES = [
 
 # SIMULATION FUNCTION 
 
-def get_simulated_spotify_data(end_date, days, tracks, location_name):
+"""def get_simulated_spotify_data(end_date, days, tracks, location_name):
     date_range = [end_date - timedelta(days=d) for d in range(days)]
     data = []
     track_features = {
@@ -58,6 +58,49 @@ def get_simulated_spotify_data(end_date, days, tracks, location_name):
                 'location': location_name,
                 'popularity': int(popularity),
                 **features
+            }
+            data.append(record)
+
+    return pd.DataFrame(data)"""
+# SIMULATION FUNCTION 
+def get_simulated_spotify_data(end_date, days, tracks, location_name):
+    date_range = [end_date - timedelta(days=d) for d in range(days)]
+    data = []
+    track_features = {
+        f'track_{i}': {
+            'energy': np.random.uniform(0.3, 0.9), 
+            'valence': np.random.uniform(0.2, 0.8), 
+            'tempo': np.random.uniform(90, 150),
+            'danceability': np.random.uniform(0.4, 0.8),
+        } for i in range(1, tracks + 1)
+    }
+
+    for date in date_range:
+        # Calculate a seasonal boost based on the day of the year (peaks in summer, dips in winter)
+        day_of_year = date.timetuple().tm_yday
+        seasonal_boost = np.sin(2 * np.pi * day_of_year / 365) * 0.1 
+
+        for track_id, features in track_features.items():
+            # Seasonal Sine Wave Component  
+            base_pop = 50 + 10 * np.sin(2 * np.pi * day_of_year / 365)
+            popularity = np.clip(base_pop + np.random.normal(0, 5), 10, 100)
+
+            # Apply the seasonal boost to the features
+            adjusted_valence = np.clip(features['valence'] + seasonal_boost, 0.2, 0.9)
+            adjusted_energy = np.clip(features['energy'] + seasonal_boost, 0.3, 0.9)
+
+            record = {
+                'date': date,
+                'track_id': track_id,
+                'location': location_name,
+                'popularity': int(popularity),
+                
+                # --- APPLYING THE FIX HERE ---
+                'energy': adjusted_energy, 
+                'valence': adjusted_valence, 
+                # Keep other features constant/use original
+                'tempo': features['tempo'],
+                'danceability': features['danceability'],
             }
             data.append(record)
 
